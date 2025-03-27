@@ -1,4 +1,4 @@
-rootProject.name = "HabitTracker"
+rootProject.name = "currency-converter"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
