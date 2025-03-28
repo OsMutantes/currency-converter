@@ -14,8 +14,8 @@ import com.github.mutantes.style.Colors
 @Composable
 fun Home() {
     Column(modifier = Modifier
-        .background(Colors.gray100) // cor pra debug
-        //.background(Colors.gray400)
+        //.background(Colors.gray100) // cor pra debug
+        .background(Colors.gray400)
         .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(118.dp)) {
         Header()
