@@ -10,10 +10,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -21,8 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import com.github.mutantes.Currency
+import com.github.mutantes.model.MainViewModel
 import com.github.mutantes.style.Colors
 import currency_converter.composeapp.generated.resources.Res
 import currency_converter.composeapp.generated.resources.inter_regular
@@ -31,12 +37,19 @@ import org.jetbrains.compose.resources.Font
 
 @Composable
 fun Body() {
+
+    val homeViewModel = remember { MainViewModel() }
+    val state = homeViewModel.screenState.collectAsState().value
+
+    LaunchedEffect(Unit) { homeViewModel.getRates(state.firstCurrency,1.0) }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
         Box(
             modifier = Modifier
+                .widthIn(max = 500.dp)
                 .padding(horizontal = 20.dp)
                 .shadow(
                     elevation = 16.dp,
@@ -70,11 +83,29 @@ fun Body() {
                     )
                 )
                 Spacer(modifier = Modifier.height(40.dp))
-                CurrencyInput(Currency.BRAZILIAN_REAL)
+                CurrencyInput(
+                    state.firstCurrency,
+                    state.convertedValue.toString(),
+                    state.changeFirstInput.not(),
+                    onValueChange = {
+                        if (it.isEmpty().not())
+                            homeViewModel.calculateRate(it.replace(',', '.').toDouble(), true)
+                    },
+                    onCurrencyChange = { homeViewModel.setFirstCurrency(it) }
+                )
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Trocar")
+                SwapButton(onClick = { homeViewModel.swapCurrency() })
                 Spacer(modifier = Modifier.height(12.dp))
-                CurrencyInput(Currency.BRITISH_POUND)
+                CurrencyInput(
+                    state.secondCurrency,
+                    state.convertedValue.toString(),
+                    state.changeFirstInput,
+                    onValueChange = {
+                        if (it.isEmpty().not())
+                            homeViewModel.calculateRate(it.replace(',', '.').toDouble(), false)
+                    },
+                    onCurrencyChange = { homeViewModel.setSecondCurrency(it) }
+                )
             }
         }
     }
