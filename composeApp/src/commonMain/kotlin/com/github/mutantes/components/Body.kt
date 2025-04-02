@@ -39,7 +39,7 @@ fun Body() {
     val homeViewModel = remember { MainViewModel() }
     val state = homeViewModel.screenState.collectAsState().value
 
-    LaunchedEffect(Unit) { homeViewModel.getRates(state.firstCurrency)}
+    LaunchedEffect(Unit) { homeViewModel.getRates(state.firstCurrency) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -80,13 +80,25 @@ fun Body() {
                     )
                 )
                 Spacer(modifier = Modifier.height(40.dp))
-                CurrencyInput(state.firstCurrency, state.firstCurrencyValue) {
-                    homeViewModel.calculateRate(it.toDouble())
+                CurrencyInput(
+                    state.firstCurrency,
+                    state.convertedValue.toString(),
+                    state.changeFirstInput.not()
+                ) {
+                    if (it.isEmpty().not())
+                    homeViewModel.calculateRate(it.replace(',','.').toDouble(), true)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 SwapButton(onClick = { homeViewModel.swapCurrency() })
                 Spacer(modifier = Modifier.height(12.dp))
-                CurrencyInput(state.secondCurrency, state.secondCurrencyValue){ }
+                CurrencyInput(
+                    state.secondCurrency,
+                    state.convertedValue.toString(),
+                    state.changeFirstInput
+                ) {
+                    if (it.isEmpty().not())
+                    homeViewModel.calculateRate(it.replace(',','.').toDouble(), false)
+                }
             }
         }
     }

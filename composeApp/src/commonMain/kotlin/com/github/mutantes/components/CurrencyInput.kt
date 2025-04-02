@@ -38,17 +38,25 @@ import currency_converter.composeapp.generated.resources.ic_arrowdown
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun CurrencyInput(currency: Currency, currencyValue: Double, onValueChange: (value: String)-> Unit) {
+fun CurrencyInput(
+    currency: Currency,
+    currencyValue : String,
+    changeInput : Boolean,
+    onValueChange: (value: String) -> Unit
+) {
     var value by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     var isFocused by remember { mutableStateOf(false) }
-    value = currencyValue.toString()
 
     Box(
         modifier =
             Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .border(2.dp, color = if (isFocused) Colors.purpleBase else Colors.gray300, shape = RoundedCornerShape(8.dp))
+                .border(
+                    2.dp,
+                    color = if (isFocused) Colors.purpleBase else Colors.gray300,
+                    shape = RoundedCornerShape(8.dp)
+                )
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
                 .onFocusChanged {
@@ -74,11 +82,13 @@ fun CurrencyInput(currency: Currency, currencyValue: Double, onValueChange: (val
                 BasicTextField(
                     modifier = Modifier
                         .padding(top = 16.dp),
-                    value = value,
-                    onValueChange = { if (it.matches(Regex("^[0-9,]*$")) && it.length <= 10) {
-                        value = it
-                        onValueChange(it)
-                    } },
+                    value = if (changeInput && currencyValue != "null" ) currencyValue.replace('.', ',') else value,
+                    onValueChange = {
+                        if (it.matches(Regex("^[0-9,]*$"))) {
+                            value = it
+                            onValueChange(it)
+                        }
+                    },
                     textStyle = TextStyle(
                         fontFamily = FontFamily(Font(Res.font.inter_regular)),
                         fontSize = 16.sp,
@@ -93,9 +103,11 @@ fun CurrencyInput(currency: Currency, currencyValue: Double, onValueChange: (val
 }
 
 @Composable
-private fun CurrencySelector(modifier: Modifier, currency: Currency ) {
-    Row(modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically) {
+private fun CurrencySelector(modifier: Modifier, currency: Currency) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Divider(modifier = Modifier.height(25.dp).width(1.dp), color = Colors.gray300)
         Spacer(modifier = Modifier.width(16.dp))
         CurrencyFlag(

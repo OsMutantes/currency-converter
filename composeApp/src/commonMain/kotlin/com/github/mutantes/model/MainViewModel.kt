@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.round
 
 class MainViewModel : ViewModel() {
     private val _screenState: MutableStateFlow<ScreenState> =
@@ -25,16 +26,20 @@ class MainViewModel : ViewModel() {
     }
 
     fun swapCurrency() {
-        _screenState.value = ScreenState(
-            firstCurrency = _screenState.value.secondCurrency,
-            secondCurrency = _screenState.value.firstCurrency
-        )
+        _screenState.update { screenState ->
+            screenState.copy(
+                firstCurrency = _screenState.value.secondCurrency,
+                secondCurrency = _screenState.value.firstCurrency
+            )
+        }
+        calculateRate(_screenState.value.originalValue ?: 0.0, firstValue = true, inverted = true)
     }
 
     fun getRates(currency: Currency) {
         viewModelScope.launch {
             val response =
-                httpClient.get("https://api.fxratesapi.com/latest?base=${currency.currencyCode}").body<RatesResponse>()
+                httpClient.get("https://api.fxratesapi.com/latest?base=${currency.currencyCode}")
+                    .body<RatesResponse>()
             _screenState.update { screenState ->
                 screenState.copy(ratesResponse = response)
             }
@@ -42,13 +47,21 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun calculateRate(value: Double) {
+    fun calculateRate(value: Double, firstValue: Boolean, inverted: Boolean = false) {
         _screenState.value.ratesResponse?.let {
-            _screenState.update {
-                screenState ->
-                screenState.copy(firstCurrencyValue = value)
+            println(it.rates)
+            //TODO : bug na linha 54 ao inverter com o swap valor nao e calculado com o rate certo
+            val rate = if (inverted) it.rates[_screenState.value.firstCurrency.currencyCode] else it.rates[_screenState.value.secondCurrency.currencyCode]
+            println("Rate que vai ser calculado : $rate")
+            val result = if (firstValue && inverted.not()) value * (rate ?: 0.0) else value / (rate ?: 0.0)
+            println("")
+            _screenState.update { screenState ->
+                screenState.copy(
+                    changeFirstInput = firstValue,
+                    convertedValue = round(result * 100) / 100,
+                    originalValue = value
+                )
             }
-            val result = value*(it.rates[_screenState.value.secondCurrency.currencyCode] ?:0.0)
             println(result)
         }
     }
