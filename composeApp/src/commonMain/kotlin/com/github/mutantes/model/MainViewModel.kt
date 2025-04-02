@@ -45,20 +45,43 @@ class MainViewModel : ViewModel() {
     }
 
 
-    fun getRates(currency: Currency) {
+    fun getRates(currency: Currency,value: Double? = null) {
         viewModelScope.launch {
             val response =
                 httpClient.get("https://api.fxratesapi.com/latest?base=${currency.currencyCode}")
                     .body<RatesResponse>()
             _screenState.update { screenState ->
-                screenState.copy(ratesResponse = response, rate = response.rates[_screenState.value.secondCurrency.currencyCode])
+                screenState.copy(
+                    ratesResponse = response,
+                    rate = response.rates[_screenState.value.secondCurrency.currencyCode]
+                )
+            }
+            value?.let {
+                calculateRate(value,true)
             }
         }
     }
 
+    fun setFirstCurrency(currency: Currency) {
+        _screenState.update { screenState ->
+            screenState.copy(firstCurrency = currency)
+        }
+        getRates(currency,_screenState.value.originalValue)
+    }
+
+    fun setSecondCurrency(currency: Currency) {
+        _screenState.update { screenState ->
+            screenState.copy(secondCurrency = currency,
+                rate = _screenState.value.ratesResponse?.rates[currency.currencyCode]
+            )
+        }
+        calculateRate(_screenState.value.originalValue ?: 0.0, true)
+    }
+
     fun calculateRate(value: Double, firstValue: Boolean) {
         _screenState.value.ratesResponse?.let {
-            val result = if (firstValue) value * (_screenState.value.rate ?: 0.0) else value / (_screenState.value.rate ?: 0.0)
+            val result = if (firstValue) value * (_screenState.value.rate
+                ?: 0.0) else value / (_screenState.value.rate ?: 0.0)
             _screenState.update { screenState ->
                 screenState.copy(
                     changeFirstInput = firstValue,

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Text
@@ -24,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import com.github.mutantes.Currency
 import com.github.mutantes.model.MainViewModel
@@ -39,7 +41,7 @@ fun Body() {
     val homeViewModel = remember { MainViewModel() }
     val state = homeViewModel.screenState.collectAsState().value
 
-    LaunchedEffect(Unit) { homeViewModel.getRates(state.firstCurrency) }
+    LaunchedEffect(Unit) { homeViewModel.getRates(state.firstCurrency,1.0) }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -47,6 +49,7 @@ fun Body() {
     ) {
         Box(
             modifier = Modifier
+                .widthIn(max = 500.dp)
                 .padding(horizontal = 20.dp)
                 .shadow(
                     elevation = 16.dp,
@@ -83,23 +86,26 @@ fun Body() {
                 CurrencyInput(
                     state.firstCurrency,
                     state.convertedValue.toString(),
-                    state.changeFirstInput.not()
-                ) {
-                    if (it.isEmpty().not())
-                    homeViewModel.calculateRate(it.replace(',','.').toDouble(), true)
-                }
+                    state.changeFirstInput.not(),
+                    onValueChange = {
+                        if (it.isEmpty().not())
+                            homeViewModel.calculateRate(it.replace(',', '.').toDouble(), true)
+                    },
+                    onCurrencyChange = { homeViewModel.setFirstCurrency(it) }
+                )
                 Spacer(modifier = Modifier.height(12.dp))
                 SwapButton(onClick = { homeViewModel.swapCurrency() })
                 Spacer(modifier = Modifier.height(12.dp))
                 CurrencyInput(
                     state.secondCurrency,
                     state.convertedValue.toString(),
-                    state.changeFirstInput
-                ) {
-                    if (it.isEmpty().not())
-                    homeViewModel.calculateRate(it.replace(',','.').toDouble(), false)
-                }
-                Text(state.rate.toString())
+                    state.changeFirstInput,
+                    onValueChange = {
+                        if (it.isEmpty().not())
+                            homeViewModel.calculateRate(it.replace(',', '.').toDouble(), false)
+                    },
+                    onCurrencyChange = { homeViewModel.setSecondCurrency(it) }
+                )
             }
         }
     }
