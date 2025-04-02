@@ -99,6 +99,7 @@ fun Body() {
                     if (it.isEmpty().not())
                     homeViewModel.calculateRate(it.replace(',','.').toDouble(), false)
                 }
+                Text(state.rate.toString())
             }
         }
     }

@@ -8,5 +8,6 @@ data class ScreenState(
     val originalValue: Double? = null,
     val convertedValue: Double? = null,
     val changeFirstInput: Boolean = false,
+    val rate: Double? = null,
     val ratesResponse: RatesResponse? = null
 )

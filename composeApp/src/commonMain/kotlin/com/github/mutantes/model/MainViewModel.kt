@@ -8,6 +8,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,14 +27,23 @@ class MainViewModel : ViewModel() {
     }
 
     fun swapCurrency() {
-        _screenState.update { screenState ->
-            screenState.copy(
-                firstCurrency = _screenState.value.secondCurrency,
-                secondCurrency = _screenState.value.firstCurrency
+        viewModelScope.launch {
+            _screenState.update { screenState ->
+                screenState.copy(
+                    firstCurrency = screenState.secondCurrency,
+                    secondCurrency = screenState.firstCurrency,
+                    rate = screenState.rate?.let { 1 / it },
+                    convertedValue = null
+                )
+            }
+
+            calculateRate(
+                _screenState.value.originalValue ?: 0.0,
+                firstValue = true
             )
         }
-        calculateRate(_screenState.value.originalValue ?: 0.0, firstValue = true, inverted = true)
     }
+
 
     fun getRates(currency: Currency) {
         viewModelScope.launch {
@@ -41,20 +51,14 @@ class MainViewModel : ViewModel() {
                 httpClient.get("https://api.fxratesapi.com/latest?base=${currency.currencyCode}")
                     .body<RatesResponse>()
             _screenState.update { screenState ->
-                screenState.copy(ratesResponse = response)
+                screenState.copy(ratesResponse = response, rate = response.rates[_screenState.value.secondCurrency.currencyCode])
             }
-            println(response)
         }
     }
 
-    fun calculateRate(value: Double, firstValue: Boolean, inverted: Boolean = false) {
+    fun calculateRate(value: Double, firstValue: Boolean) {
         _screenState.value.ratesResponse?.let {
-            println(it.rates)
-            //TODO : bug na linha 54 ao inverter com o swap valor nao e calculado com o rate certo
-            val rate = if (inverted) it.rates[_screenState.value.firstCurrency.currencyCode] else it.rates[_screenState.value.secondCurrency.currencyCode]
-            println("Rate que vai ser calculado : $rate")
-            val result = if (firstValue && inverted.not()) value * (rate ?: 0.0) else value / (rate ?: 0.0)
-            println("")
+            val result = if (firstValue) value * (_screenState.value.rate ?: 0.0) else value / (_screenState.value.rate ?: 0.0)
             _screenState.update { screenState ->
                 screenState.copy(
                     changeFirstInput = firstValue,
@@ -62,7 +66,6 @@ class MainViewModel : ViewModel() {
                     originalValue = value
                 )
             }
-            println(result)
         }
     }
 }
