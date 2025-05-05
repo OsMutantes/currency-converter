@@ -18,7 +18,7 @@ import kotlin.math.round
 
 class MainViewModel : ViewModel() {
     private val _screenState: MutableStateFlow<ScreenState> =
-        MutableStateFlow(ScreenState(Currency.BRAZILIAN_REAL, Currency.UNITED_STATES_DOLLAR))
+        MutableStateFlow(ScreenState(Currency.UNITED_STATES_DOLLAR, Currency.BRAZILIAN_REAL))
     val screenState: StateFlow<ScreenState> = _screenState.asStateFlow()
     private val httpClient: HttpClient = HttpClient {
         install(ContentNegotiation) {
